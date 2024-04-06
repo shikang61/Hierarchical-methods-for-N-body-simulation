@@ -38,7 +38,7 @@ class Box:
 
         self.children = []
         self.particles = []
-        self.centre_of_mass = self.pos
+        self.centre_of_mass = self.coords
         self.total_mass = 0
 
     def create_Children_Boxes(self):
@@ -48,15 +48,24 @@ class Box:
         ----------
         Q2  |  Q3
         """
-        if not self.children:
-            x0, y0 = self.coords
-            size = self.size / 2
-            return [
-                Box((x0-size/2, y0+size/2), size, self, max_n=self.max_n),
-                Box((x0+size/2, y0+size/2), size, self, max_n=self.max_n),
-                Box((x0-size/2, y0-size/2), size, self, max_n=self.max_n),
-                Box((x0+size/2, y0-size/2), size, self, max_n=self.max_n)
+        x0, y0 = self.coords
+        size = self.size / 2
+        return [
+            Box((x0-size/2, y0+size/2), size, self, max_n=self.max_n),
+            Box((x0+size/2, y0+size/2), size, self, max_n=self.max_n),
+            Box((x0-size/2, y0-size/2), size, self, max_n=self.max_n),
+            Box((x0+size/2, y0-size/2), size, self, max_n=self.max_n)
         ]
+    def get_Child_Box(self, particle):
+        """
+        This method returns the quadrant in which the particle belongs.
+        Q0  |  Q1
+        ----------
+        Q2  |  Q3
+        """
+        x0, y0 = self.coords
+        x, y = particle.pos
+        return self.children[[[2, 3], [0, 1]][int(y > y0)][int(x > x0)]]
     
     def update_Centre_Of_Mass(self, particle):
         """
@@ -71,35 +80,7 @@ class Box:
         self.centre_of_mass = np.array([x_new, y_new])
         self.total_mass += m
 
-    def within_Box(self, particle):
-        """
-        This method checks if a particle is within the Box.
-        """
-        x0, y0 = self.coords
-        x, y = particle.pos
-        size = self.size
-        return (x0-size/2 <= x <= x0+size/2) and (y0-size/2 <= y <= y0+size/2)
     
-    def add_Particle(self, particle):
-        """
-        This method adds a particle to the Box.
-        If the number of particles in the Box exceeds the max_n parameter, it creates children boxes and distributes the particles among them.
-        """
-        self.particles.append(particle)
-        if len(self.particles) <= self.max_n:    
-            self.update_Centre_Of_Mass(particle)
-        elif self.children: # if children boxes already exist, add the new particle to the appropriate child box
-            for child in self.children:
-                if child.within_Box(particle):
-                    child.add_Particle(particle)
-                    break
-        else: # if children boxes do not exist, create them and distribute the particles among them
-            self.children = self.create_Children_Boxes()
-            all_particles = self.particles + [particle]
-            for particle in all_particles:
-                for child in self.children:
-                    if child.within_Box(particle):
-                        child.add_Particle(particle)
-                        break
+
         
             
