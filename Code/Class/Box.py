@@ -1,6 +1,6 @@
 import numpy as np
 
-class Box:
+class Box():
     """
     The Box class acts as the Nodes for a (Quad)tree. It is used to store the particles in the Quadtree.
     It contains information about the centre_of_mass and total_mass of all particles in contains.
