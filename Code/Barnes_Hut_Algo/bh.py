@@ -1,3 +1,5 @@
+from Supporting_functions.potential import distance, potential
+
 # Barnes-Hut Parameter:
 theta = 0.5
 
@@ -27,5 +29,37 @@ def BH_build_tree(root, particles):
         BH_insert_particle(root, particle)
     return root
 
-def BH_calculate_potential(particle, box):
-    pass
+def BH_calculate_potential_single(particle, box, theta):
+    """
+    This function calculates the potential at the target particle due to all particles, using the Barnes-Hut approximation.
+    """
+    if not box.children: # leaf nodes of the Quadtree
+        for p in box.particles:
+            if p != particle:
+                particle.phi += potential(particle, p)
+                print("particle at", p.pos, "contributes potential", potential(particle, box))
+    elif quotient(particle, box) < theta:
+        print(quotient(particle, box))
+        particle.phi += potential(particle, box)
+        print("box at", box.coords, f"has {box.mass} particles and" ,"contributes potential", potential(particle, box))
+    else:
+        print(quotient(particle, box))
+        for child in box.children:
+            BH_calculate_potential_single(particle, child, theta)
+        
+    
+def BH_calculate_potential_all(particles, root, theta):
+    for p in particles:
+        print("\n\nnew particle at", p.pos)
+        BH_calculate_potential_single(p, root, theta)
+
+
+def quotient(particle, box):
+    """
+    This function computes the quotient for the Barnes-Hut approximation.
+    """
+    return box.size / distance(particle, box)
+    
+
+
+

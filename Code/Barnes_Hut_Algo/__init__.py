@@ -1,1 +1,1 @@
-from .bh import *
+from .bh import BH_build_tree, BH_calculate_potential_all, BH_insert_particle, BH_calculate_potential_single

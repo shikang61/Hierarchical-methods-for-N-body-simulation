@@ -24,9 +24,9 @@ class Box():
 
     Other attributes:
     ---------
-    centre_of_mass: array
+    pos: array
         The centre of mass of the Box
-    total_mass: float
+    mass: float
         The total mass of the Box
     """
 
@@ -38,8 +38,8 @@ class Box():
 
         self.children = []
         self.particles = []
-        self.centre_of_mass = self.coords
-        self.total_mass = 0
+        self.pos = self.coords
+        self.mass = 0
 
     def create_Children_Boxes(self):
         """
@@ -71,14 +71,14 @@ class Box():
         """
         This method updates the centre of mass of the Box after adding a particle.
         """
-        x_com, y_com = self.centre_of_mass
-        M = self.total_mass
+        x_com, y_com = self.pos
+        M = self.mass
         x, y = particle.pos
         m = particle.mass
         x_new, y_new = (x_com*M + x*m)/(M+m), (y_com*M + y*m)/(M+m)
 
-        self.centre_of_mass = np.array([x_new, y_new])
-        self.total_mass += m
+        self.pos = np.array([x_new, y_new])
+        self.mass += m
 
     
 

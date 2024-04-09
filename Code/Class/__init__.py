@@ -1,2 +1,2 @@
-from .Box import *
-from .Particle import *
+from .Box import Box
+from .Particle import Particle
