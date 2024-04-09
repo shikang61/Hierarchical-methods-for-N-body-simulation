@@ -1,7 +1,5 @@
 # Barnes-Hut Parameter:
-
 theta = 0.5
-
 
 def BH_insert_particle(box, particle):
     """
@@ -29,3 +27,5 @@ def BH_build_tree(root, particles):
         BH_insert_particle(root, particle)
     return root
 
+def BH_calculate_potential(particle, box):
+    pass

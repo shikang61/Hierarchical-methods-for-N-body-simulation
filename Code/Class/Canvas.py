@@ -19,9 +19,3 @@ class Canvas():
         self.max_n = max_n
         self.rootBox = Box(coords, size, None, max_n)
         self.particles = particles
-     
-    def draw(self):
-        pass
-
-    def draw_Boxes(self):
-        pass    
