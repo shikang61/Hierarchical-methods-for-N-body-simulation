@@ -23,7 +23,7 @@ def BH_insert_particle(box, particle):
 
 def BH_build_tree(root, particles):
     """
-    This function builds the Barnes-Hut Quadtree from a list of particles given.
+    This function builds the Barnes-Hut Quadtree from a list of particles given. Insert the particle one by one to build the tree.
     """
     for particle in particles:
         BH_insert_particle(root, particle)

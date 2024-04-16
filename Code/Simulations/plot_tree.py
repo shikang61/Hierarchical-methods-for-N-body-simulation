@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from Barnes_Hut_Algo import BH_build_tree, BH_calculate_potential_all
+from FMM_Algo import FMM_build_tree
 import numpy as np
 
 fig = plt.figure()
@@ -19,15 +20,24 @@ def display(box):
     else:
         draw_box(box)
 
-def plot_tree(root, particles, theta, animated=False, get_potential=False):
+def plot_tree(root, particles, theta, type, animated=False, get_potential=False):
     """
     This function plots the Barnes-Hut Quadtree.
     """
-    BH_build_tree(root, particles)
-    max_pos = root.size/2
-    ticks = np.arange(-1*max_pos, max_pos+1, step=1)
-    if get_potential:
-        BH_calculate_potential_all(particles, root, theta)
+    if type == "bh":
+        BH_build_tree(root, particles)
+        max_pos = root.size/2
+        ticks = np.arange(-1*max_pos, max_pos+1, step=1)
+        if get_potential:
+            BH_calculate_potential_all(particles, root, theta)
+    elif type == "fmm":
+        FMM_build_tree(root, particles)
+        max_pos = root.size/2
+        ticks = np.arange(-1*max_pos, max_pos+1, step=1)
+        root.set_Child_Side_Neighbors()
+        print(root.children[0].side_neighbours)
+
+
 
     if not animated:
         quadt.scatter([p.pos[0] for p in particles], [p.pos[1] for p in particles], s=10, c='r')
