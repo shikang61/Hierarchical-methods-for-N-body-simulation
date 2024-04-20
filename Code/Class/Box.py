@@ -1,5 +1,5 @@
 import numpy as np
-from Supporting_functions.fmm_support import get_neighbours_child
+from Supporting_functions.fmm_support import get_neighbours_child, get_corner_neighbours
 
 class Box_bh():
     """
@@ -91,10 +91,10 @@ class Box_fmm():
 
     Other attributes:
     ---------
-    cindex: int
+    c_index: int
         The index of the box in the parent's children list
     """
-    def __init__(self, coords, size, children=None, parent=None, level=0, max_n=1):
+    def __init__(self, coords, size, c_index, parent=None, level=0, max_n=1):
         self.coords = np.array(coords)
         self.size = size
         self.parent = parent
@@ -103,8 +103,8 @@ class Box_fmm():
         self.particles = []
         self.children = []
         self.side_neighbours = 4*[None,]
-        self.nneighbours = None
-        self.cindex = 0
+        self.nearest_neighbours = None
+        self.c_index = c_index
 
         self.bottom_left = self.coords - self.size/2
         self.level = level
@@ -120,10 +120,10 @@ class Box_fmm():
         x0, y0 = self.coords
         size = self.size / 2
         return [
-            Box_fmm((x0-size/2, y0+size/2), size, self, max_n=self.max_n),
-            Box_fmm((x0+size/2, y0+size/2), size, self, max_n=self.max_n),
-            Box_fmm((x0-size/2, y0-size/2), size, self, max_n=self.max_n),
-            Box_fmm((x0+size/2, y0-size/2), size, self, max_n=self.max_n)
+            Box_fmm((x0-size/2, y0+size/2), size, 0, self, level = self.level+1, max_n=self.max_n),
+            Box_fmm((x0+size/2, y0+size/2), size, 1, self, level = self.level+1, max_n=self.max_n),
+            Box_fmm((x0-size/2, y0-size/2), size, 2, self, level = self.level+1, max_n=self.max_n),
+            Box_fmm((x0+size/2, y0-size/2), size, 3, self, level = self.level+1, max_n=self.max_n)
         ]
     
     def get_Child_Box(self, particle):
@@ -187,30 +187,23 @@ class Box_fmm():
             if child.children is not None:
                 child.set_Child_Side_Neighbors()
     
-    def nearest_neighbors(self):
-        if self._nneighbors is not None:
-            return self._nneighbors
-
-        # Find remaining nearest neighbors of same level
-        nn = [cn.side_neighbours[(i+1)%4]
-              for i, cn in enumerate(self.side_neighbours)
-              if cn is not None and cn.level == self.level]
-        # Find remaining nearest neigbor at lower levels #So hacky!
-        nn += [cn.side_neighbours[(i+1)%4]._get_child(self.CORNER_CHILDREN[i])
-               for i, cn in enumerate(self.side_neighbours)
-               if cn is not None and cn.side_neighbours[(i+1)%4] is not None and
-               (cn.level < self.level and i != self.DISREGARD[self._cindex])]
-
-        nn = [n for n in self.side_neighbours + nn if n is not None]
-        self._nneighbors = nn
-        return nn
+    @property
+    def get_Nearest_Neighbours(self):
+        if self.nearest_neighbours is not None:
+            return self.nearest_neighbours
+        # Get all corner neighbours
+        corner_neighbours = get_corner_neighbours(self)
+        nearest_neighbours = [n for n in list(set(self.side_neighbours + corner_neighbours)) if n is not None]
+        self.nearest_neighbours = nearest_neighbours
+        return nearest_neighbours
 
     def interaction_set(self):
-        nn, pn = self.nearest_neighbors, self.parent.nearest_neighbors
+        nn = self.get_Nearest_Neighbours
+        pn = self.parent.get_Nearest_Neighbours
         int_set = []
         for n in pn:
-            if n._has_children():
-                int_set += [c for c in n if c not in nn]
+            if len(n.children) != 0:
+                int_set += [c for c in n.children if c not in nn]
             elif n not in nn:
                 int_set.append(n)
         return int_set
