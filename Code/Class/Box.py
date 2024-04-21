@@ -31,7 +31,7 @@ class Box_bh():
         The total mass of the Box
     """
 
-    def __init__(self, coords, size, parent, max_n=1):
+    def __init__(self, coords, size, parent, max_n=2):
         self.coords = np.array(coords)
         self.size = size
         self.max_n = max_n
@@ -94,21 +94,25 @@ class Box_fmm():
     c_index: int
         The index of the box in the parent's children list
     """
-    def __init__(self, coords, size, c_index, parent=None, level=0, max_n=1):
+    def __init__(self, coords, size, c_index, parent=None, level=0, max_n=1, boundary=None, p=3):
         self.coords = np.array(coords)
         self.size = size
+        self.bottom_left = self.coords - self.size/2
         self.parent = parent
         self.max_n = max_n
+        self.p = p
           
         self.particles = []
         self.children = []
-        self.side_neighbours = 4*[None,]
+        self.side_neighbours = 4*[None]
+        if boundary == "periodic" and level == 0: # Only for root node
+            self.side_neighbours = 4*[self]
         self.nearest_neighbours = None
         self.c_index = c_index
-
-        self.bottom_left = self.coords - self.size/2
+        
         self.level = level
-        self.inner, self.outer = None, None
+        self.inner_coeffs = np.zeros((p + 1), dtype=complex)
+        self.outer_coeffs = np.zeros((p + 1), dtype=complex)
 
     def create_Children_Boxes(self):
         """
@@ -120,10 +124,10 @@ class Box_fmm():
         x0, y0 = self.coords
         size = self.size / 2
         return [
-            Box_fmm((x0-size/2, y0+size/2), size, 0, self, level = self.level+1, max_n=self.max_n),
-            Box_fmm((x0+size/2, y0+size/2), size, 1, self, level = self.level+1, max_n=self.max_n),
-            Box_fmm((x0-size/2, y0-size/2), size, 2, self, level = self.level+1, max_n=self.max_n),
-            Box_fmm((x0+size/2, y0-size/2), size, 3, self, level = self.level+1, max_n=self.max_n)
+            Box_fmm((x0-size/2, y0+size/2), size, 0, parent = self, level = self.level+1, max_n=self.max_n),
+            Box_fmm((x0+size/2, y0+size/2), size, 1, parent = self, level = self.level+1, max_n=self.max_n),
+            Box_fmm((x0-size/2, y0-size/2), size, 2, parent = self, level = self.level+1, max_n=self.max_n),
+            Box_fmm((x0+size/2, y0-size/2), size, 3, parent = self, level = self.level+1, max_n=self.max_n)
         ]
     
     def get_Child_Box(self, particle):

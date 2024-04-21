@@ -1,6 +1,6 @@
 import numpy as np
 
-def potential(target, source):
+def bh_potential(target, source):
     """
     Calculate the potential at the target due to the source, using the kernel function:
     G = log(|r|) for 2D problem

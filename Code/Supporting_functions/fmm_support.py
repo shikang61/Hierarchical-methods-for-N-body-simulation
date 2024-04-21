@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def get_neighbours_child(box, curr_child, i, other):
 
     parent_neighbours_child = curr_child ^ ((other+1)%2+1)
@@ -57,3 +60,37 @@ def get_corner_neighbours(box):
                     """
                     corner_neighbour.append(corner.get_Child_At_Index(CORNER_CHILDREN[i]))
     return corner_neighbour
+
+def distance(target, source):
+    """
+    Calculate the distance between two particles
+    """
+    return np.linalg.norm(np.array(source.pos) - np.array(target.pos))
+
+def FMM_potential(target, source):
+    """
+    Calculate the potential at the target due to the source, using the kernel function:
+    G = log(|r|) for 2D problem
+    ϕ = G * q
+    """
+    return source.mass * np.log(distance(target, source))
+    # return source.mass * np.log(complex(*target.pos) - complex(*source.pos))
+
+
+def potential_direct_sum_nearest_neighbour(particles, sources): #P2P_1
+    """
+    Direct sum calculation of all-to-all potential from seperate sources
+    """
+    for particle in particles:
+        for source in sources:
+            # print(FMM_potential(particle, source))
+            particle.phi += FMM_potential(particle, source)
+            
+def potential_direct_sum(particles): #P2P_2
+    """
+    Direct sum calculation of all-to-all potential
+    """
+    for i, particle in enumerate(particles):
+        for source in (particles[:i] + particles[i+1:]):
+            # print(FMM_potential(particle, source))
+            particle.phi += FMM_potential(particle, source)

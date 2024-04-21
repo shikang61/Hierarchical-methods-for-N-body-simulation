@@ -1,4 +1,4 @@
-from Supporting_functions.potential import distance, potential
+from Supporting_functions.bh_support import distance, bh_potential
 
 # Barnes-Hut Parameter:
 theta = 0.5
@@ -19,6 +19,8 @@ def BH_insert_particle(box, particle):
     else: # If no vacancy and the box has children, insert the particle into the appropriate child box.
         child_box = box.get_Child_Box(particle)
         BH_insert_particle(child_box, particle)
+    if particle not in box.particles:
+        box.particles.append(particle)
 
 
 def BH_build_tree(root, particles):
@@ -36,14 +38,14 @@ def BH_calculate_potential_single(particle, box, theta):
     if not box.children: # leaf nodes of the Quadtree
         for p in box.particles:
             if p != particle:
-                particle.phi += potential(particle, p)
-                print("particle at", p.pos, "contributes potential", potential(particle, box))
+                particle.phi += bh_potential(particle, p)
+                # print("particle at", p.pos, "contributes potential", potential(particle, box))
     elif quotient(particle, box) < theta:
-        print(quotient(particle, box))
-        particle.phi += potential(particle, box)
-        print("box at", box.coords, f"has {box.mass} particles and" ,"contributes potential", potential(particle, box))
+        # print(quotient(particle, box))
+        particle.phi += bh_potential(particle, box)
+        # print("box at", box.coords, f"has {box.mass} particles and" ,"contributes potential", potential(particle, box))
     else:
-        print(quotient(particle, box))
+        # print(quotient(particle, box))
         for child in box.children:
             BH_calculate_potential_single(particle, child, theta)
         
