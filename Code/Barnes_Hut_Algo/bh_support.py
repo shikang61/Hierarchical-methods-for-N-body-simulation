@@ -13,3 +13,9 @@ def distance(target, source):
     Calculate the distance between the target particle and the source particle/box.
     """
     return np.linalg.norm(np.array(source.pos) - np.array(target.pos))
+
+def quotient(particle, box):
+    """
+    This function computes the quotient for the Barnes-Hut approximation.
+    """
+    return box.size / distance(particle, box)

@@ -4,10 +4,12 @@ Implementation of Fast Muilti-pole Method (FMM) algorithm
 
 from itertools import chain
 import numpy as np
-from Supporting_functions.fmm_support import distance, FMM_potential, potential_direct_sum_nearest_neighbour, potential_direct_sum
+from .fmm_support import distance, FMM_potential, potential_direct_sum_nearest_neighbour, potential_direct_sum, FMM_search
 import math
 
 
+################## QUADTREE BUILDING ##################
+# Adaptive quadtree
 def FMM_insert_particle(box, particle):
     """
     This function inserts a particle into the Barnes-Hut Quadtree.
@@ -26,8 +28,7 @@ def FMM_insert_particle(box, particle):
     if particle not in box.particles:
         box.particles.append(particle)
 
-
-def FMM_build_tree(root, particles):
+def FMM_build_adaptive_tree(root, particles):
     """
     This function builds the FMM Adaptive Quadtree from a list of particles given.
     """
@@ -36,9 +37,34 @@ def FMM_build_tree(root, particles):
     root.set_Child_Side_Neighbors()
     return root
 
+# Quadtree with a given number of levels
+def FMM_create_tree(box, levels):
+    if box.level < levels:
+        if not box.children:
+            box.children = box.create_Children_Boxes()
+            for child in box.children:
+                FMM_create_tree(child, levels)
+
+def FMM_populate_tree(particles, root):
+    for particle in particles:
+        target_box = FMM_search(particle, root)
+        target_box.particles.append(particle)
+        inseet_particle(particle, target_box)
+
+def inseet_particle(particle, leaf_box):
+    if leaf_box.parent != None:
+        leaf_box.parent.particles.append(particle)
+        inseet_particle(particle, leaf_box.parent)
+    
+def FMM_build_fixed_tree(root, particles, levels):
+    FMM_create_tree(root, levels)
+    FMM_populate_tree(particles, root)
+    root.set_Child_Side_Neighbors()
+    return root
+
 ################## UPWARD PASS ##################
-# p can be changed according to needed precision #
 def multipole(particles, p, center): #S2M
+
     """
     Compute a multipole expansion up to p terms, corresponding to equation (2.3) in Greengard and Rokhlin paper.
     Complex coordinates are used to calculate the multipole expansion coefficients
@@ -95,7 +121,7 @@ def multipole_to_local(outer_coeffs, z0): #M2L
     Compute the local Taylor expansion from multipole expansion coefficients, corresponding to equation (2.13) and (2.14) in Greengard and Rokhlin paper.
     local = [b_0, b_l]
     """
-    local = np.zeros(len(outer_coeffs), dtype=complex)
+    local = np.zeros_like(outer_coeffs)
     local[0] = (sum([(outer_coeffs[k]/z0**k)*(-1)**k for k in range(1, len(outer_coeffs))]) +outer_coeffs[0]*np.log(-z0))
     for l in range(1, len(outer_coeffs)):
         temp = complex(0, 0)
@@ -108,7 +134,7 @@ def shift_local(coeffs, z0): #L2L
     """
     Shift local expansion to new centre z0, corresponding to equation (2.17) in Greengard and Rokhlin paper
     """
-    shift = np.zeros(len(coeffs), dtype=complex)
+    shift = np.zeros_like(coeffs)
     for l in range(len(coeffs)):
         for k in range(l, len(coeffs)):
             shift[l] += coeffs[k] * math.comb(k,l) * (-z0)**(k-l)
@@ -128,8 +154,8 @@ def compute_inner_coeffs(box):
     for far_box in box.interaction_set():
         z0 = complex(*far_box.coords) - complex(*box.coords)
         box.inner_coeffs += multipole_to_local(far_box.outer_coeffs, z0)
-   
 
+################## CALCULATE POTENTIAL ##################
 def FMM_calculate_potential_single(box):
     compute_inner_coeffs(box)
     if not box.children: # leaf node

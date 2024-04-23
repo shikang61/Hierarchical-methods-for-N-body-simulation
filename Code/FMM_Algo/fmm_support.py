@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 def get_neighbours_child(box, curr_child, i, other):
 
@@ -94,3 +94,18 @@ def potential_direct_sum(particles): #P2P_2
         for source in (particles[:i] + particles[i+1:]):
             # print(FMM_potential(particle, source))
             particle.phi += FMM_potential(particle, source)
+
+
+def find_p(accuracy):
+    """
+    Find the number of terms p needed to satisfy the error condition
+    """
+    return math.ceil(-np.log2(accuracy))
+    
+
+def FMM_search(particle, box):
+    if len(box.children) != 0:
+        next_box = box.get_Child_Box(particle)
+        return FMM_search(particle, next_box)
+    else:
+        return box

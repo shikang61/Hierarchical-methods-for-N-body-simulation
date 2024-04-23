@@ -18,8 +18,9 @@ class Particle():
 
 
     """
-    def __init__(self, pos, mass):
+    def __init__(self, pos, mass, idx):
         self.pos = np.array(pos)
         self.mass= mass
         self.phi = 0
+        self.idx = idx
 

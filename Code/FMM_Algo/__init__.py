@@ -1,1 +1,1 @@
-from .fmm import FMM_insert_particle, FMM_build_tree, FMM_calculate_potential_all
+from .fmm import FMM_insert_particle, FMM_build_adaptive_tree, FMM_calculate_potential_all, FMM_build_fixed_tree

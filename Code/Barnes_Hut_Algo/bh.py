@@ -1,8 +1,7 @@
-from Supporting_functions.bh_support import distance, bh_potential
+from Barnes_Hut_Algo.bh_support import distance, bh_potential, quotient
 
-# Barnes-Hut Parameter:
-theta = 0.5
 
+################## QUADTREE BUILDING ##################
 def BH_insert_particle(box, particle):
     """
     This function inserts a particle into the Barnes-Hut Quadtree.
@@ -22,15 +21,16 @@ def BH_insert_particle(box, particle):
     if particle not in box.particles:
         box.particles.append(particle)
 
-
 def BH_build_tree(root, particles):
     """
     This function builds the Barnes-Hut Quadtree from a list of particles given. Insert the particle one by one to build the tree.
+    This algorithm creates an adaptive quadtree
     """
     for particle in particles:
         BH_insert_particle(root, particle)
     return root
 
+################## CALCULATE POTENTIAL ##################
 def BH_calculate_potential_single(particle, box, theta):
     """
     This function calculates the potential at the target particle due to all particles, using the Barnes-Hut approximation.
@@ -56,11 +56,6 @@ def BH_calculate_potential_all(particles, root, theta):
         BH_calculate_potential_single(p, root, theta)
 
 
-def quotient(particle, box):
-    """
-    This function computes the quotient for the Barnes-Hut approximation.
-    """
-    return box.size / distance(particle, box)
     
 
 
