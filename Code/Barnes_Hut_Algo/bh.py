@@ -1,59 +1,89 @@
-from Barnes_Hut_Algo.bh_support import distance, bh_potential, quotient
-
+"""
+Barnes Hut Algorithm
+"""
+import time
+from Barnes_Hut_Algo.bh_support import BH_potential, quotient
 
 ################## QUADTREE BUILDING ##################
 def BH_insert_particle(box, particle):
     """
-    This function inserts a particle into the Barnes-Hut Quadtree.
+    BH_potential_direct_sum inserts a given particle into a node (box) of the Barnes-Hut Quadtree.
     """
-    box.update_Centre_Of_Mass(particle) # update the centre of mass of the box after every insertion of a particle
-    if len(box.particles) < box.max_n: # if the box has vacancy, insert the particle into the box.
+    # update the centre of mass of the box with every insertion of a new particle
+    box.update_Centre_Of_Mass(particle) 
+
+    # if the box has vacancy, insert the particle into the box.
+    if len(box.particles) < box.max_n: 
         box.particles.append(particle)
-    elif not box.children: # If no vacancy and the box has no children, create 4 children and redistribute the particle into the appropriate child box.
+
+     # If no vacancy and the box has no children, create 4 children and redistribute the particle into the appropriate child box.
+    elif not box.children:
         box.children = box.create_Children_Boxes()
         particles = box.particles + [particle]
         child_boxes = [box.get_Child_Box(p) for p in particles]
         for p, child_box in zip(particles, child_boxes):
             BH_insert_particle(child_box, p)
-    else: # If no vacancy and the box has children, insert the particle into the appropriate child box.
+
+    # If no vacancy and the box has children, insert the particle into the appropriate child box.
+    else: 
         child_box = box.get_Child_Box(particle)
         BH_insert_particle(child_box, particle)
+
     if particle not in box.particles:
         box.particles.append(particle)
 
 def BH_build_tree(root, particles):
     """
-    This function builds the Barnes-Hut Quadtree from a list of particles given. Insert the particle one by one to build the tree.
-    This algorithm creates an adaptive quadtree
+    Given the root node, this function builds the Barnes-Hut Quadtree from a list of particles given. 
+    It Insert the particle one by one to build the tree.
+    This algorithm creates an adaptive quadtree.
+
+    Returns:
+    --------
+    time_taken : float
+        Time taken to build the tree
     """
+    start_time = time.perf_counter()
     for particle in particles:
         BH_insert_particle(root, particle)
-    return root
+    end_time = time.perf_counter()
+    time_taken = end_time - start_time
+    return time_taken
 
 ################## CALCULATE POTENTIAL ##################
-def BH_calculate_potential_single(particle, box, theta):
+def BH_calculate_potential_single(particle, box):
     """
-    This function calculates the potential at the target particle due to all particles, using the Barnes-Hut approximation.
+    Given a target particle, this function calculates the potential at the 
+    particle due to all other particles, using the Barnes-Hut approximation.
     """
-    if not box.children: # leaf nodes of the Quadtree
+    # At the leaf nodes of the Quadtree, compute the potential directly and add to target particle
+    if not box.children: 
         for p in box.particles:
             if p != particle:
-                particle.phi += bh_potential(particle, p)
-                # print("particle at", p.pos, "contributes potential", potential(particle, box))
-    elif quotient(particle, box) < theta:
-        # print(quotient(particle, box))
-        particle.phi += bh_potential(particle, box)
-        # print("box at", box.coords, f"has {box.mass} particles and" ,"contributes potential", potential(particle, box))
+                particle.phi += BH_potential(particle, p)
+
+    # If the box is far enough, approximate the potential and add to target particle       
+    elif quotient(particle, box) < box.theta: 
+        particle.phi += BH_potential(particle, box)
     else:
-        # print(quotient(particle, box))
         for child in box.children:
-            BH_calculate_potential_single(particle, child, theta)
-        
-    
-def BH_calculate_potential_all(particles, root, theta):
+            BH_calculate_potential_single(particle, child)
+
+def BH_calculate_potential_all(particles, root):
+    """
+    This function computes the potential for every particle in the Quadtree.
+
+    Returns:
+    --------
+    time_taken : float
+        Time taken to calculate the potential for all particles
+    """
+    start_time = time.perf_counter()
     for p in particles:
-        print("\n\nnew particle at", p.pos)
-        BH_calculate_potential_single(p, root, theta)
+        BH_calculate_potential_single(p, root)
+    end_time = time.perf_counter()
+    time_taken = end_time - start_time
+    return time_taken
 
 
     
