@@ -281,11 +281,11 @@ def FMM_calculate_potential_all(root):
     --------
     time_dic : dict
         Dictionary of time taken for each operation of the form: 
-        time_dic = {"S2M_time": float, "M2M_time": float, "M2L_time": float, "L2L_time": float, "L2P_time": float, "P2P_time": float, "total_time": float}
+        time_dic = {"S2M_time": float, "M2M_time": float, "M2L_time": float, "L2L_time": float, "L2P_time": float, "P2P_time": float, "fmm_calc": float}
     """
     time_dic = {"S2M_time": 0, "M2M_time": 0, "M2L_time": 0, "L2L_time": 0, "L2P_time": 0, "P2P_time": 0}
     time_dic = compute_outer_coeffs(root, time_dic) # Upward pass
     for child in root.children:
         time_dic = FMM_calculate_potential_single(child, time_dic) # Downward pass and potential evaluation
-    time_dic["total_time"] = sum(time_dic.values())
+    time_dic["fmm_calc"] = sum(time_dic.values())
     return time_dic

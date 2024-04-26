@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, fit_line = False):
+def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, fit_line = False, ax = None, error_label = ""):
     """
     This function plot the results for the simulation
 
@@ -37,7 +37,8 @@ def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, 
     ax : matplotlib axis
         return the axis of the plot
     """
-    fig, ax = plt.subplots(figsize = (10,6))
+    if ax == None:
+        fig, ax = plt.subplots(figsize = (10,6))
     if type(results) == dict:
         for key in results.keys():
             y = np.array(results[key])
@@ -65,15 +66,19 @@ def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, 
                 m, c = np.polyfit(fit_x, fit_y, 1)
                 ax.plot(fit_x, m*fit_x+ c, label = rf"{key} fit: $t \propto {x_label}^{{{m:.2f}}}$", linestyle = "--")
 
-            # Plot style
+            # Plot style "line" or "scatter". Do not label the points if fit_line is True
             if plot_style == "line":
-                ax.plot(X, Y, label = key)
+                if fit_line:
+                    ax.plot(X, Y)
+                else:
+                    ax.plot(X, Y, label = key)
             elif plot_style == "scatter":
-                ax.scatter(X, Y, label = key) 
+                if fit_line:
+                    ax.scatter(X, Y, s = 10)
+                else:
+                    ax.scatter(X, Y, label = key, s= 10) 
 
     elif type(results) == list:
-        Y = results
-        ax.set_ylabel("Max relative error")
         # log of x
         if log_x:
             X = np.log2(x)
@@ -81,14 +86,23 @@ def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, 
         else:
             X = x
             ax.set_xlabel(f"{x_label}")
+        if log_y:
+            Y = np.log2(results)
+            ax.set_ylabel(r"$log_{2}$ error")
+        else:
+            Y = results
+            ax.set_ylabel("Max relative error")
         
         # plot style
         if plot_style == "line":
-            ax.plot(X, Y, label = "Max relative error")
+            ax.plot(X, Y, label = "Max relative error" + error_label)
         elif plot_style == "scatter":
-            ax.scatter(X, Y, label = "Max relative error")
-        
-    ax.legend()
+            ax.scatter(X, Y, label = "Max relative error" + error_label, s=10)
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                 box.width, box.height * 0.9])
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=5)
     return ax
 
 

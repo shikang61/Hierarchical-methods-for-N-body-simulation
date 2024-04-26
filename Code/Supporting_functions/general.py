@@ -1,5 +1,6 @@
 from Class import Particle
 import numpy as np
+from Barnes_Hut_Algo import quotient
 
 def reset_particle(particles):
     """
@@ -77,6 +78,22 @@ def calculate_error(algorithm_phi, direct_phi):
     Returns:
     --------
     error : np.array
-        The relative error
+        The relative absolute error
     """
     return np.abs(direct_phi - algorithm_phi)/np.abs(direct_phi)
+
+def interaction_line(ax, particle, box, max_mass):
+    """
+    This connects, using a black dotted line, the particle to the mass it is interacting with
+    """
+    if not box.children: 
+        for p in box.particles:
+            if p != particle:
+                ax.plot([particle.pos[0],p.pos[0]], [particle.pos[1],p.pos[1]], 'k:', alpha=0.3)      
+    elif quotient(particle, box) < 0.5: 
+        ax.plot([particle.pos[0],box.pos[0]], [particle.pos[1], box.pos[1]], 'k:', alpha=0.3)
+        ax.scatter(box.pos[0], box.pos[1], s=box.mass/max_mass * 400, facecolors='none', edgecolors='blue')
+    else:
+        for child in box.children:
+                interaction_line(ax, particle, child, max_mass)
+    

@@ -1,7 +1,7 @@
 import numpy as np
 import math
+from tqdm import tqdm
 import time
-
 ################## QUADTREE ##################
 def get_neighbours_child(box, curr_child, i, other):
     """
@@ -132,7 +132,7 @@ def potential_direct_sum_nearest_neighbour(particles, sources, time_dic): #P2P_1
     time_dic["P2P_time"] += end_time - start_time
     return time_dic
             
-def FMM_potential_direct_sum(particles): #P2P_2
+def FMM_potential_direct_sum(particles, tqdm_bar=False): #P2P_2
     """
     Direct sum calculation of pairwise potential between all particles given
 
@@ -140,6 +140,8 @@ def FMM_potential_direct_sum(particles): #P2P_2
     --------
     particles : list
         List of particles to calculate pairwise potential
+    tqdm_bar : bool
+        If True, display a progress bar
 
     Returns:
     --------
@@ -147,7 +149,7 @@ def FMM_potential_direct_sum(particles): #P2P_2
         Time taken to calculate the potential directly
     """
     start_time = time.perf_counter()
-    for i, particle in enumerate(particles):
+    for i, particle in enumerate(tqdm(particles, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}', disable= not tqdm_bar, desc="Direct sum progress: ")):
         for source in (particles[:i] + particles[i+1:]):
             particle.phi += FMM_potential(particle, source)
     end_time = time.perf_counter()
