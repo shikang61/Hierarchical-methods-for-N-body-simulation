@@ -4,3 +4,6 @@ from .fmm_vs_bh import fmm_vs_bh
 from .fmm_varying_n import fmm_varying_n
 from .fmm_varying_p import fmm_varying_p
 from .fmm_varying_levels import fmm_varying_levels
+from .bh_varying_leaf import bh_varying_leaf
+from .fmm_varying_leaf import fmm_varying_leaf
+from .fmm_fixed_vs_adaptive import fmm_fixed_vs_adaptive

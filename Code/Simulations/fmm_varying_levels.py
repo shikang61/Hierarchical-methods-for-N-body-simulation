@@ -7,24 +7,28 @@ import numpy as np
 from Supporting_functions import *
 from .simulation import run_FMM_simulation
 import matplotlib.pyplot as plt
+import time
 
 ################## Simulation Parameter ##################
-# Fixed Parameters
-p = 7                   # Number of terms in multipole (FMM)
-N = 300
+# Fixed Parameters for the algorithm
+p = 6                   # Number of terms in multipole (FMM)
+N = 5000                # Number of particles
 boundary = None         # Boundary condition of the simulation: "None" for wall boundary condition, "periodic" for periodic boundary condition (FMM)
 FMM_tree_type = "fixed" # Type of FMM tree: "fixed" or "adaptive
+fmm_leaf = 5            # Maximum number of particles in a leaf box
+direct_sum = False
 
+# Fixed parameters for the environment
 center = (0, 0)         # Center of the simulation area
 size = 1024             # Size of the simulation area
-max_n = 1               # Maximum number of particles in a leaf box
-seed = 21               # Seed for random number generator
+seed = 25               # Seed for random number generator
 distribution = "random" # Distribution of the particles: "random" or "triangular"
+save_data = False       # Option to save the data
 
 # Variable parameter: Number of particless
-max_levels = 6
-lvl_range = np.arange(1, max_levels+1)
-x_label = "max levels"
+max_levels = 7
+lvl_range = np.arange(2, max_levels+1)
+x_label = "lvl"
 ####################################################################
 
 def fmm_varying_levels():
@@ -35,79 +39,74 @@ def fmm_varying_levels():
     all_error = {} # list[list[float]]: A list containing the error of every particle for each N
     roots = {}
 
-    print("\n ************** Start experiment with varying N (number of particles) for Fast Multipole Algorithm **************\n")
+    print("\n ************** Start experiment with varying number of levels for Fast Multipole Algorithm **************\n")
 
-    ################### SIMULATION ###################
     # Print all the simulation parameters
     print(f"""Simulation parameters: 
          p = {p}, boundary = {"wall" if boundary==None else boundary}, Number of particles = {N}
+         tree type = {FMM_tree_type},
          Size of the simulation area = {size} 
-         Seed = {seed} \n\t Distribution of particles = {distribution} \n\t Maximum number of particles in leaf box = {max_n} 
-         Number of data points = {len(lvl_range)} \n\t Range of {x_label} = 1 to {max_levels} \n""")
-    input("Press Enter to begin simulation...")
-
+         Seed = {seed} \n\t Distribution of particles = {distribution} \n\t Maximum number of particles in leaf box = {fmm_leaf} 
+         Number of data points = {len(lvl_range)} \n\t Range of {x_label} = 2 to {max_levels} \n""")
+    
+    start_time = time.perf_counter()
     for i, lvl in enumerate(lvl_range):
         particles = generate_particles(N, size, seed, distribution)
         print(f"\n--------- ({i+1}/{len(lvl_range)}) Number of levels = {lvl} ---------\n")
-        run_FMM_simulation(center, size, p, max_n, boundary, particles, lvl, N, FMM_tree_type, lvl, times, max_error, all_error, roots)
+        run_FMM_simulation(center, size, p, fmm_leaf, boundary, particles, lvl, N, FMM_tree_type, lvl, times, max_error, all_error, roots, direct_sum)
+        if lvl == 5:
+            particles_5 = particles
+    end_time = time.perf_counter()
+    print(f"Total time taken: {end_time - start_time:.2f} seconds")
         
     print("\n ************** Simulation Done ************** \n")
 
     # Option to save simulation data
-    if input("Do you want to save the data? (y/n): ") == "y":
+    if save_data:
         np.save(f"Data/FMM_varying_levels_{max(lvl_range)}_time_{p}_{FMM_tree_type}_{N}", times)
         np.save(f"Data/FMM_varying_levels_{max(lvl_range)}_error_{p}_{FMM_tree_type}_{N}", all_error)
         print("--- Data saved successfully ---\n")
 
-    ################### GENERATING PLOTS ###################
     plt.close()
-    # Plot log2(time) against levels
-    if input(f"Do you want to plot the results for time vs {x_label}? (y/n): ") == "y":
-        # log2(t) vs levels
-        ax = plot_results(lvl_range, times, x_label, plot_style = "scatter", log_x = False, log_y = True, fit_line = False)
-        ax.set_title(fr"FMM: $log_{2}$ t vs max levels for p = {p}, N = {N}, tree type = {FMM_tree_type}")
-        plt.savefig("Figure/fmm_varying_level_logt_vs_levelsN.png")
+    try:
+        del times["fmm_direct_sum"]
+    except:
+        pass
+    # Plot log10(time) against levels
+    # ax = plot_results(lvl_range, times, x_label, plot_style = "scatter", log_x = True, log_y = True, fit_line = True)
+    # ax.set_title(r"FMM: $log_{10}$ t "+ f"vs levels for p = {p}, N = {N}, tree type = {FMM_tree_type}")
+    # plt.savefig("Figure/fmm_varying_level_logt_vs_levels.png", dpi = 500)
 
-        # t vs levels
-        ax = plot_results(lvl_range, times, x_label, plot_style = "line", log_x = False, log_y = False, fit_line = False)
-        ax.set_title(f"FMM: t vs levels for p = {p}, N = {N}, tree type = {FMM_tree_type} ")
-        plt.savefig("Figure/fmm_varying_level_t_vs_level.png")
+    # t vs levels
+    keys = ["fmm_calc", "P2P_time", "M2L_time"]
+    time_to_expt = {key: np.array(times[key]) for key in keys}
+    ax = plot_results(lvl_range, time_to_expt, x_label, plot_style = "line", log_x = False, log_y = False, fit_line = False)
+    ax.set_title(f"FMM: t vs levels for p = {p}, N = {N}, tree type = {FMM_tree_type} ")
+    plt.savefig("Figure/fmm_varying_level_t_vs_level.png", dpi = 500)
 
-    # Plot max_error against levels
-    if input(f"Do you want to plot the results for error vs {x_label}? (y/n): ") == "y":
+    if direct_sum:
+        # Plot max_error against levels
         ax = plot_results(lvl_range, max_error, x_label, plot_style = "line", log_x = False, log_y = False, fit_line = False)
-        ax.set_title(rf"FMM: max error vs max levels for p = {p}, N = {N}, tree type = {FMM_tree_type}")
-        plt.savefig("Figure/fmm_varying_level_maxerr_vs_levels.png")
-    
-    # Visualise the Quadtree
-    if input("Do you want to visualise the Quadtree? (y/n): ") == "y":
-        ax = plot_tree(roots[max(lvl_range)], particles, visualise_interaction=True)
-        ax.set_title(rf"Quadtree for FMM Algorithm for  p = {p}, N = {N}, tree type = {FMM_tree_type} and levels = {max(lvl_range)}")
-        plt.savefig("Figure/fmm_varying_level_quadtree_interactions.png")
+        ax.set_title(rf"FMM: max error vs levels for p = {p}, N = {N}, tree type = {FMM_tree_type}")
+        plt.savefig("Figure/fmm_varying_level_maxerr_vs_levels.png", dpi = 500)
+        
+        # Visualise the Quadtree
+        lvl = 5
+        ax = plot_tree(roots[lvl], particles_5, visualise_interaction=True)
+        ax.set_title(f"Quadtree for FMM Algorithm for  p = {p}, N = {N}, tree type = {FMM_tree_type} and levels = {lvl}")
+        plt.savefig("Figure/fmm_varying_level_quadtree_interactions.png", dpi = 500)
 
-    # Plot the error distribution
-    if input("Do you want to plot the error distribution? (y/n): ") == "y":
-        for x, error in zip(lvl_range[:4:1], list(all_error.values())[:4:1]): 
+        # Plot the error distribution
+        count = 1
+        for x, error in zip(lvl_range[::2], list(all_error.values())[::2]): 
             ax = plot_error_distribution(x, error, x_label)
-            ax.set_title("Error distribution for FMM Algorithm")
-            plt.savefig("Figure/fmm_varying_level_error_distribution.png")
+            ax.set_title(f"Error distribution for FMM Algorithm for p = {p}, N = {N}, tree type = {FMM_tree_type}")
+            plt.savefig(f"Figure/fmm_varying_level_error_distribution_{count}.png", dpi = 500)
+            count += 1
 
-    # Visualise the error distribution
-    if input("Do you want to visualise the spatial error distribution? (y/n): ") == "y":
-        print(lvl_range[::2])
-        while True:
-            try:
-                lvl_idx = int(input("Enter the index of the value of theta you want to visualise: "))
-                lvl = lvl_range[lvl_idx]
-                break
-            except:
-                print("invalid input")
-                pass
+        lvl = 5
         error = all_error[lvl]
         particles = generate_particles(N, size, seed, distribution)
         ax = plot_tree(roots[lvl], particles, error = error, visualise_error=True)
         ax.set_title(f"Spatial error distribution for FMM Algorithm for N = {N}, p = {p}, levels = {lvl}")
-        plt.tight_layout()
-        plt.savefig("Figure/fmm_varying_level_spatial_error_distribution.png")
-
-    plt.show()
+        plt.savefig("Figure/fmm_varying_level_spatial_error_distribution.png", dpi = 500)

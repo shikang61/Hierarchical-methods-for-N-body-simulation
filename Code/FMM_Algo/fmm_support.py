@@ -74,21 +74,10 @@ def get_corner_neighbours(box):
     return corner_neighbour
 
 ################## POTENTIAL ################## 
-def distance(target, source):
-    """
-    Calculate the distance between two particles
-
-    Returns:
-    --------
-    distance : float
-        The distance between the target and source
-    """
-    return np.linalg.norm(np.array(source.pos) - np.array(target.pos))
-
 def FMM_potential(target, source):
     """
     Calculate the potential at the target due to the source, using the kernel function:
-    G = log(|r|) for 2D problem
+    G = -log(|r|) for 2D problem
     ϕ = q * G
 
     Returns:
@@ -156,6 +145,7 @@ def FMM_potential_direct_sum(particles, tqdm_bar=False): #P2P_2
     time_taken = end_time - start_time
     return time_taken
 
+
 ################## MISCELLANEOUS ##################
 def find_p(accuracy):
     """
@@ -182,3 +172,14 @@ def FMM_search(particle, box):
         return FMM_search(particle, next_box)
     else:
         return box
+    
+def set_max_levels(N, n_leaf):
+    """
+    Set the maximum levels of the tree based on the number of particles and the maximum number of particles in a leaf box
+
+    Returns:
+    --------
+    max_levels : int
+        Maximum levels of the tree
+    """
+    return int(np.ceil(np.log(N/n_leaf)/np.log(4)))

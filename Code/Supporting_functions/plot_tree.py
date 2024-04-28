@@ -45,18 +45,32 @@ def plot_tree(quadtree, particles, error=None, animated=False, visualise_interac
         target = np.random.choice(np.arange(1, len(particles)+1))
         target_particle = [p for p in particles if p.idx == target][0]
         ax.scatter([p.pos[0] for p in particles if p == target_particle], [p.pos[1] for p in particles if p == target_particle], s=10, c='black')
-        target_box = search(quadtree, target_particle )
-        for i in target_box.interaction_set():
-            if i is not None:
-                draw_box(ax, i, "red")
-        if target_box.parent is not None:
+        target_box = search(quadtree, target_particle)
+        try:
+            for i in target_box.interaction_set():
+                if i is not None:
+                    draw_box(ax, i, "red")
+        except:
+            pass
+
+        try:
             for i in target_box.parent.interaction_set():
                 if i is not None:
                     draw_box(ax, i, "blue")
-        if target_box.parent.parent is not None:
+        except:
+            pass
+        try:
             for i in target_box.parent.parent.interaction_set():
                     if i is not None:
                         draw_box(ax, i, "orange")
+        except:
+            pass
+        try:
+            for i in target_box.parent.parent.parent.interaction_set():
+                    if i is not None:
+                        draw_box(ax, i, "violet")
+        except:
+            pass
         
     # Visualising the interaction of the particle with the centre of masses (BH only)
     if visualise_interaction and quadtree.type == "bh":
@@ -80,9 +94,8 @@ def plot_tree(quadtree, particles, error=None, animated=False, visualise_interac
     else:
         # Visualising the error distribution on the Quadtree
         if visualise_error and error is not None:
-            im = ax.scatter([p.pos[0] for p in particles], [p.pos[1] for p in particles], s=3, c=error, cmap='cividis_r', vmin=min(error), vmax=max(error))
+            im = ax.scatter([p.pos[0] for p in particles], [p.pos[1] for p in particles], s=2, c=error, cmap='cividis_r', vmin=min(error), vmax=max(error))
             fig.colorbar(im, label= '(abs.) fractional error', fraction=0.03, pad=0.1)
-
         else:
             ax.scatter([p.pos[0] for p in particles], [p.pos[1] for p in particles], s=1, c='r')
         plt.xlim(-1*max_pos, max_pos)

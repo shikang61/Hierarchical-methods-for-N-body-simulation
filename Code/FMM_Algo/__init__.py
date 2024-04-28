@@ -1,2 +1,2 @@
 from .fmm import FMM_insert_particle, FMM_build_adaptive_tree, FMM_calculate_potential_all, FMM_build_fixed_tree
-from .fmm_support import FMM_potential_direct_sum
+from .fmm_support import FMM_potential_direct_sum, set_max_levels

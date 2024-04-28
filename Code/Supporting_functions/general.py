@@ -89,9 +89,9 @@ def interaction_line(ax, particle, box, max_mass):
     if not box.children: 
         for p in box.particles:
             if p != particle:
-                ax.plot([particle.pos[0],p.pos[0]], [particle.pos[1],p.pos[1]], 'k:', alpha=0.3)      
+                ax.plot([particle.pos[0],p.pos[0]], [particle.pos[1],p.pos[1]], 'k:', alpha=0.3, linewidth=0.9)
     elif quotient(particle, box) < 0.5: 
-        ax.plot([particle.pos[0],box.pos[0]], [particle.pos[1], box.pos[1]], 'k:', alpha=0.3)
+        ax.plot([particle.pos[0],box.pos[0]], [particle.pos[1], box.pos[1]], 'k:', alpha=0.3, linewidth=0.9)
         ax.scatter(box.pos[0], box.pos[1], s=box.mass/max_mass * 400, facecolors='none', edgecolors='blue')
     else:
         for child in box.children:

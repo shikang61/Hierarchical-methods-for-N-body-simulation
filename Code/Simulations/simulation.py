@@ -17,7 +17,8 @@ def run_FMM_simulation(center,
                        FMM_times, 
                        FMM_max_error, 
                        FMM_all_error,
-                       FMM_roots):
+                       FMM_roots,
+                       direct_sum = True):
         """
         Function to run the FMM simulation
         """
@@ -49,16 +50,22 @@ def run_FMM_simulation(center,
         print(f"Total time taken for the FMM algorithm: {round(tree_time + potential_time['fmm_calc'], 4)} seconds")
     
         # Direct sum
-        direct_time = FMM_potential_direct_sum(particles, tqdm_bar=True)
-        FMM_times["fmm_direct_sum"].append(direct_time)
-        phi_direct = get_potential(particles)
-        print(f"Time taken to calculate the potential directly: {direct_time:.4f} seconds")
+        if direct_sum:
+            direct_time = FMM_potential_direct_sum(particles, tqdm_bar=True)
+            FMM_times["fmm_direct_sum"].append(direct_time)
+            phi_direct = get_potential(particles)
+            print(f"Time taken to calculate the potential directly: {direct_time:.4f} seconds")
 
-        # Error
-        error = calculate_error(phi_fmm, phi_direct)
-        FMM_max_error.append(np.max(error))
-        FMM_all_error[variable] = error
-        print(f"Max relative error: {np.max(error)*100:.4f}%")
+            # Error
+            error = calculate_error(phi_fmm, phi_direct)
+            FMM_max_error.append(np.max(error))
+            FMM_all_error[variable] = error
+            print(f"Max relative error: {np.max(error)*100:.4f}%")
+        else:
+            try:
+                del FMM_times["fmm_direct_sum"]
+            except:
+                pass
 
         return phi_fmm
 
@@ -73,7 +80,8 @@ def run_BH_simulation(center,
                       BH_times, 
                       BH_max_error, 
                       BH_all_error, 
-                      roots):
+                      roots, 
+                      direct_sum = True):
     """
     Function to run the BH simulation
     """
@@ -95,16 +103,22 @@ def run_BH_simulation(center,
     print(f"Time taken to calculate the potential: {potential_time:.4f} seconds")
     print(f"Total time taken for the Barnes-Hut algorithm: {tree_time + potential_time:.4f} seconds")
 
-    # Direct sum
-    direct_time = BH_potential_direct_sum(particles, tqdm_bar=True)
-    BH_times["bh_direct_sum"].append(direct_time)
-    phi_direct = get_potential(particles)
-    print(f"Time taken to calculate the potential directly: {direct_time:.4f} seconds")
+    if direct_sum:
+        # Direct sum
+        direct_time = BH_potential_direct_sum(particles, tqdm_bar=True)
+        BH_times["bh_direct_sum"].append(direct_time)
+        phi_direct = get_potential(particles)
+        print(f"Time taken to calculate the potential directly: {direct_time:.4f} seconds")
 
-    # Error
-    error = calculate_error(phi_bh, phi_direct)
-    BH_max_error.append(np.max(error))
-    BH_all_error[variable] = error
-    print(f"Max relative error: {np.max(error)*100:.4f}%")
+        # Error
+        error = calculate_error(phi_bh, phi_direct)
+        BH_max_error.append(np.max(error))
+        BH_all_error[variable] = error
+        print(f"Max relative error: {np.max(error)*100:.4f}%")
+    else:
+        try:
+            del BH_times["bh_direct_sum"]
+        except:
+            pass
 
     return phi_bh

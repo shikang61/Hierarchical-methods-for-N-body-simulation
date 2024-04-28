@@ -25,9 +25,9 @@ def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, 
     plot_style: str
         Type of plot: "scatter" or "line"
     log_x : bool 
-        If True, x-axis will be log2(x). Default is False.
+        If True, x-axis will be log10(x). Default is False.
     log_y : bool
-        If True, y-axis will be log2(y). Default is False.
+        If True, y-axis will be log10(y). Default is False.
     fit_line : bool
         If True, a line will be fitted to the data. Default is False.
 
@@ -45,26 +45,30 @@ def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, 
 
             # log of x
             if log_x:
-                X = np.log2(x)
-                ax.set_xlabel(fr"$log_{2}$ {x_label}")
+                X = np.log10(x)
+                ax.set_xlabel(r"$log_{10}$ "+f"{x_label}")
             else:
                 X = x
                 ax.set_xlabel(f"{x_label}")
             
             # log of y
             if log_y:
-                Y = np.log2(y)
-                ax.set_ylabel(r"$log_{2}$ (t/s)")
+                Y = np.log10(y)
+                ax.set_ylabel(r"$log_{10}$ (t/s)")
             else:
                 Y = y
                 ax.set_ylabel("t/s")
             
             # fit a line
             if fit_line:
-                fit_x = np.log2(x)
-                fit_y = np.log2(y)
-                m, c = np.polyfit(fit_x, fit_y, 1)
-                ax.plot(fit_x, m*fit_x+ c, label = rf"{key} fit: $t \propto {x_label}^{{{m:.2f}}}$", linestyle = "--")
+                try:
+                    fit_x = np.log10(x)
+                    fit_y = np.log10(y)
+                    m, c = np.polyfit(fit_x, fit_y, 1)
+                    fit_x = np.linspace(min(fit_x), max(fit_x), 500)
+                    ax.plot(fit_x, m*fit_x+ c, label = rf"{key} fit: $t \propto {x_label}^{{{m:.2f}}}$", linestyle = "--")
+                except:
+                    pass
 
             # Plot style "line" or "scatter". Do not label the points if fit_line is True
             if plot_style == "line":
@@ -81,14 +85,14 @@ def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, 
     elif type(results) == list:
         # log of x
         if log_x:
-            X = np.log2(x)
-            ax.set_xlabel(rf"$log_{2}$ {x_label}")
+            X = np.log10(x)
+            ax.set_xlabel(r"$log_{10}$ " + f"{x_label}")
         else:
             X = x
             ax.set_xlabel(f"{x_label}")
         if log_y:
-            Y = np.log2(results)
-            ax.set_ylabel(r"$log_{2}$ error")
+            Y = np.log10(results)
+            ax.set_ylabel(r"$log_{10}$ error")
         else:
             Y = results
             ax.set_ylabel("Max relative error")
@@ -102,32 +106,6 @@ def plot_results(x, results, x_label, plot_style, log_x = False, log_y = False, 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
                  box.width, box.height * 0.9])
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=5)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2) # 4
     return ax
 
-
-# def NlogN(N, a, b):
-#     return a*N*np.log2(N) + b
-
-# def N2(N, a, b):
-#     return a*N**2 + b
-
-# def logN(N, a, b):
-#     return a*np.log2(N) + b
-
-# X_fit = np.linspace(min(X), max(X), 100)
-# if key == "create_tree":
-#     popt, pcov = curve_fit(logN, X, Y)
-#     a, b = popt[0], popt[1]
-#     ax.scatter(X, Y, label = key)
-#     ax.plot(X_fit, logN(X_fit,*popt), label = rf"t = {a:.2f}logN + {b:.2f}", linestyle = "--")
-# elif key == "bh_calc":
-#     popt, pcov= curve_fit(NlogN, X, Y)
-#     a, b = popt[0], popt[1]
-#     ax.scatter(X, Y, label = key)
-#     ax.plot(X_fit, NlogN(X_fit, *popt), label = rf"t = {a:.2f}NlogN + {b:.2f}", linestyle = "--")
-# elif key == "direct_sum":
-#     popt, pcov = curve_fit(N2, X, Y)
-#     a, b = popt[0], popt[1]
-#     ax.scatter(X, Y, label = key)
-#     ax.plot(X_fit, N2(X_fit, *popt), label = rf"t = {a:.2f}$N^2$ + {b:.2f}", linestyle = "--")
